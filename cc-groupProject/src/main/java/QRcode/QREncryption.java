@@ -128,9 +128,36 @@ public class QREncryption {
      * Add alignment pattern to the matrix.
      */
     private void addAlignmentPattern() {
-        return;
+        if (N == VERSION1) {
+            return;
+        }
+        addAlignment(18, 18);
     }
 
+    /**
+     * Add the alignment pattern.
+     * 
+     * @param centralX the x-axis value of central point
+     * @param centralY the y-axis value of central point
+     */
+    private void addAlignment(int centralX, int centralY) {
+        // Add center point.
+        matrix[centralX][centralY] = true;
+ 
+        // Add the outer circle.
+        for (int j = centralY - 2; j <= centralY + 2; ++j) {
+            matrix[centralX - 2][j] = true;
+        }
+        for (int i = centralX - 1; i <= centralX + 2; ++i) {
+            matrix[i][centralY + 2] = true;
+        }
+        for (int j = centralY - 2; j <= centralY + 1; ++j) {
+            matrix[centralX + 2][j] = true;
+        }
+        for (int i = centralX - 1; i <= centralX + 1; ++i) {
+            matrix[i][centralY - 2] = true;
+        }
+    }
 
     /**
      * Fill the payload to the matrix.
@@ -160,6 +187,7 @@ public class QREncryption {
         QREncryption ins = new QREncryption("dsFFFFFFFFFFFFFW");
         ins.addPositionPattern();
         ins.addTimingPattern();
+        ins.addAlignmentPattern();
         ins.printHelper();
     }
 }
