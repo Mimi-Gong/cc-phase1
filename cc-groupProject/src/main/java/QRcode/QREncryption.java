@@ -38,13 +38,57 @@ public class QREncryption {
     }
 
     /**
-     * Add position pattern to the matrix.
+     * Add position patterns to the matrix.
+     */
+    public void addPositionPattern() {
+        // Add left-up.
+        addPos(3, 3);
+        for (int i = 0; i <= 7; ++i) {
+            matrix[i][7] = false;
+        }
+        for (int j = 0; j <= 6; ++j) {
+            matrix[7][j] = false;
+        }
+        
+        // Add right-up.
+        addPos(3, N - 4);
+        for (int i = 0; i <= 7; ++i) {
+            matrix[i][N - 8] = false;
+        }
+        for (int j = N - 7; j <= N - 1; ++j) {
+            matrix[7][j] = false;
+        }
+
+        // Add left-down.
+        addPos(N - 4, 3);
+        for (int i = N - 8; i <= N - 1; ++i) {
+            matrix[i][7] = false;
+        }
+        for (int j = 0; j <= 6; ++j) {
+            matrix[N - 8][j] = false;
+        }
+    }
+
+    /**
+     * Add one position pattern to the matrix.
      * 
      * @param centralX the x-axis value of central point
      * @param centralY the y-axis value of central point
      */
-    private void addPositionPattern(int centralX, int centralY) {
-        return;
+    private void addPos(int centralX, int centralY) {
+        for (int i = centralX - 3; i <= centralX + 3; ++i) {
+            for (int j = centralY - 3; j <= centralY + 3; ++j) {
+                if ((i == centralX - 2 || i == centralX + 2) &&
+                    (j != centralY - 3 && j != centralY + 3)) {
+                    matrix[i][j] = false;
+                } else if((j == centralY - 2 || j == centralY + 2) &&
+                          (i != centralX - 3 && i != centralX + 3)) {
+                    matrix[i][j] = false;
+                } else {
+                    matrix[i][j] = true;
+                }
+            }
+        }
     }
 
 
@@ -73,11 +117,29 @@ public class QREncryption {
      * Fill the payload to the matrix.
      */
     private void fillPayload() {
-        
+        return;
     }
-    
-    
-    public static void main(String[] args) {
-        System.out.println("QR project");
+
+    /**
+     * Print the 2-D matrix for debug use.
+     */
+    private void printHelper() {
+        System.out.println(N);
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                if (matrix[i][j] == true) {
+                    System.out.print("1");
+                } else {
+                    System.out.print(" ");
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        QREncryption ins = new QREncryption("dsFFFFFFFFFFFFFW");
+        ins.addPositionPattern();
+        ins.printHelper();
     }
 }
