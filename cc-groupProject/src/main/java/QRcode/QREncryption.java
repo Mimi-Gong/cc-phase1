@@ -40,7 +40,7 @@ public class QREncryption {
     /**
      * Add position patterns to the matrix.
      */
-    public void addPositionPattern() {
+    private void addPositionPattern() {
         // Add left-up.
         addPos(3, 3);
         for (int i = 0; i <= 7; ++i) {
@@ -93,6 +93,14 @@ public class QREncryption {
 
 
     /**
+     * Add timing patterns to the matrix.
+     */
+    private void addTimingPattern() {
+        addTiming(6, 8, 0, N - 16);
+        addTiming(8, 6, 1, N - 16);
+    }
+
+    /**
      * Add timing pattern to the matrix.
      * 
      * @param startX the x-axis value of central point
@@ -100,8 +108,19 @@ public class QREncryption {
      * @param dir the direction to fill
      * @param len the length to fill
      */
-    private void addTimingPattern(int startX, int startY, int dir, int len) {
-        return;
+    private void addTiming(int startX, int startY, int dir, int len) {
+        // In x direction
+        if (dir == 0) {
+            for (int j = 0; j < len; j += 2) {
+                matrix[startX][startY + j] = true;
+            }
+
+        // In y direction.
+        } else {
+            for (int i = 0; i < len; i += 2) {
+                matrix[startX + i][startY] = true;
+            }            
+        }
     }
 
 
@@ -140,6 +159,7 @@ public class QREncryption {
     public static void main(String[] args) throws Exception {
         QREncryption ins = new QREncryption("dsFFFFFFFFFFFFFW");
         ins.addPositionPattern();
+        ins.addTimingPattern();
         ins.printHelper();
     }
 }
