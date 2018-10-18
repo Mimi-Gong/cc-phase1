@@ -56,6 +56,23 @@ public class QREncryption {
         this.input = input;
     }
 
+
+    /**
+     * Generate the QR code. This is the main API of the class.
+     */
+    public void generateQRCode() {
+        addPositionPattern();
+        addTimingPattern();
+        addAlignmentPattern();
+        fillPayload();
+        printHelper();
+
+        MatrixToBytes();
+        encode();
+        printRes();        
+    }
+
+ 
     /**
      * Add position patterns to the matrix.
      */
@@ -88,6 +105,7 @@ public class QREncryption {
         }
     }
 
+
     /**
      * Add one position pattern to the matrix.
      * 
@@ -118,6 +136,7 @@ public class QREncryption {
         addTiming(6, 8, 0, N - 16);
         addTiming(8, 6, 1, N - 16);
     }
+
 
     /**
      * Add timing pattern to the matrix.
@@ -153,12 +172,30 @@ public class QREncryption {
         addAlignment(18, 18);
     }
     
-     
+
+    /**
+     * Get padding.
+     * 
+     * @param num the padding number
+     * @return padding string
+     */
     public String getPaddingBinaryString(int num){
         return String.format("%08d", new BigInteger(Integer.toBinaryString(num)));
     }
     
-    private void fillColumn(int startX, int startY, int endX, int endY, int move, String str) {
+
+    /**
+     * Fill one column.
+     * 
+     * @param startX start x pos
+     * @param startY start y pos
+     * @param endX end x pos
+     * @param endY end y pos
+     * @param move firection to move
+     * @param str string to fill
+     */
+    private void fillColumn(int startX, int startY,
+            int endX, int endY, int move, String str) {
         int curX = startX;
         int curY = startY;
         
@@ -172,7 +209,13 @@ public class QREncryption {
             curX += move;
         }
     }
-    
+
+
+    /**
+     * Fill the payload for version1.
+     * 
+     * @param playload input string
+     */
     public void zigzagVersion1(String playload) {
         fillColumn(20, 20, 8, 19, UP, playload.substring(0,26));
         fillColumn(8, 18, 20, 17, DOWN, playload.substring(26,52));
@@ -187,7 +230,13 @@ public class QREncryption {
         fillColumn(12, 3, 8, 2, UP, playload.substring(204,214));
         fillColumn(8, 1, 12, 0, DOWN, playload.substring(214,224));
     }
-    
+
+
+    /**
+     * Fill the payload for version2.
+     * 
+     * @param playload input string
+     */
     public void zigzagVersion2(String playload) {
         fillColumn(24, 24, 8, 23, UP, playload.substring(0,34));
         fillColumn(8, 22, 24, 21, DOWN, playload.substring(34,68));
@@ -236,6 +285,7 @@ public class QREncryption {
         }
      }
 
+
     /**
      * Fill the payload to the matrix.
      */
@@ -268,6 +318,7 @@ public class QREncryption {
         }
     }
 
+
     /**
      * Print the 2-D matrix for debug use.
      */
@@ -290,12 +341,33 @@ public class QREncryption {
      * Encode the QRcode to logistic map.
      */
     private void encode() {
+        int padding = 32 - N * N % 32;
+
+        // Initial logistic number.
         double x = 0.1;
         double r = 4.0;
-        for (int i = 0; i < MAP_N; i++) {
+        for (int i = 0; i < MAP_N - 4; i++) {
             int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
-            logisticMap[i] = tmpNum ^ matrixBytes[i] & 255;
+            logisticMap[i] = tmpNum ^ matrixBytes[i];
             x = logictic(x, r);
+        }
+
+        // Get reverse logistic mask for last 4 bytes.
+        int logisNum = 0;
+        for (int i = 0; i < 4; ++i) {
+            int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
+            logisNum = (logisNum << 8) | tmpNum;
+            x = logictic(x, r);
+        }
+        logisNum = logisNum >>> padding;
+
+        
+        // Handle the last 4 bytes.
+        int mask = 0x000000ff;
+        for (int i = 3; i >= 0; --i) {
+            int idx = MAP_N - 4 + i;
+            logisticMap[idx] = matrixBytes[idx] ^ (mask & logisNum);
+            logisNum = logisNum >>> 8;
         }
     }
 
@@ -309,13 +381,21 @@ public class QREncryption {
         return r * x * (1.0 - x);
     }
 
+
+    /**
+     * Print the result of logistic encoding.
+     */
     private void printRes() {
-        System.out.println("+++++++++++++++++");
+        System.out.println("++++++++++ The encode result +++++++");
         for (int i : logisticMap) {
-            System.out.println(Integer.toHexString(i));
+            System.out.print(" 0x" + Integer.toHexString(i));
         }
     }
-    
+
+
+    /**
+     * Convert matrix to bytes array.
+     */
     public void MatrixToBytes() {
         StringBuffer binaryStr = new StringBuffer();
         if (N == VERSION1) {
@@ -354,19 +434,10 @@ public class QREncryption {
             System.out.println(Integer.toHexString(matrixBytes[k]));
         }
     }
-
     
 
     public static void main(String[] args) throws Exception {
         QREncryption ins = new QREncryption("CC Team");
-        ins.addPositionPattern();
-        ins.addTimingPattern();
-        ins.addAlignmentPattern();
-        ins.fillPayload();
-        ins.printHelper();
-
-        ins.MatrixToBytes();
-        ins.encode();
-        ins.printRes();
+        ins.generateQRCode();
     }
 }
