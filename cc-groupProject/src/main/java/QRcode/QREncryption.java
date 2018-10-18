@@ -268,7 +268,6 @@ public class QREncryption {
         }
     }
 
-
     /**
      * Print the 2-D matrix for debug use.
      */
@@ -357,6 +356,8 @@ public class QREncryption {
             System.out.println(Integer.toHexString(matrixBytes[k]));
         }
     }
+
+    
 
     public static void main(String[] args) throws Exception {
         QREncryption ins = new QREncryption("CC Team");
