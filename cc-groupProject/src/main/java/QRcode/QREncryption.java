@@ -2,11 +2,12 @@ package QRcode;
 
 import java.math.BigInteger;
 
+
 public class QREncryption {
 
     /** The 2-D QR code matrix */
     private boolean[][] matrix;
-    private int[] matrixIntegers;
+    private int[] matrixBytes;
 
     /** The 2-D logistic map. */
     private int[] logisticMap;
@@ -266,34 +267,7 @@ public class QREncryption {
             zigzagVersion2(payload.toString());
         }
     }
-    
-    public void MatrixToBytes() {
-        StringBuffer binaryStr = new StringBuffer();
-        if (N == VERSION1) {
-            matrixIntegers = new int[14];
-        } else {
-            matrixIntegers = new int[20];
-        }
-        
-        for (int i = 0; i< matrix.length; i++) {
-            for (int j = 0; j<matrix[0].length; j++) {
-                if (matrix[i][j]) {
-                    binaryStr.append("1");
-                } else {
-                    binaryStr.append("0");
-                }
-            }
-        }
-        
-        int cnt = 0;
-        for (int i = 0; i<binaryStr.length(); i += 32) {
-            int end = Math.min(binaryStr.length(), i+32);
-            String binaryInt = binaryStr.substring(i, end).toString();
-            matrixIntegers[cnt++] = (int) Long.parseLong(binaryInt, 2);
-            System.out.println(Integer.toHexString((int) Long.parseLong(binaryInt, 2)));
-        }
 
-    }
 
     /**
      * Print the 2-D matrix for debug use.
