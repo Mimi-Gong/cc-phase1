@@ -340,16 +340,14 @@ public class QREncryption {
             for (int j = i; j < i+32; j += 8) {
                 int end = Math.min(binaryStr.length(), j+8);
                 String binaryByte = binaryStr.substring(j, end).toString();
-                matrixBytes[cnt++] = (byte) Integer.parseInt(binaryByte, 2);
+                matrixBytes[cnt++] = (byte) Integer.parseInt(binaryByte, 2) & 255;
             }
         }
         cnt = matrixBytes.length-1;
         for (int j = binaryStr.length(); j>i; j -= 8) { 
             int begin = Math.max(j-8, i);
             String binaryByte = binaryStr.substring(begin, j).toString();
-            matrixBytes[cnt--] = (byte) Integer.parseInt(binaryByte, 2);
-            System.out.println((cnt+1) + " " + matrixBytes[cnt+1]);
-            System.out.println(Integer.toHexString(matrixBytes[cnt+1]));
+            matrixBytes[cnt--] = (byte) Integer.parseInt(binaryByte, 2) & 255;
         }
         
         for (int k = 0; k < matrixBytes.length; k++) {
