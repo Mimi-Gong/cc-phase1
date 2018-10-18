@@ -292,7 +292,7 @@ public class QREncryption {
             matrixIntegers[cnt++] = (int) Long.parseLong(binaryInt, 2);
             System.out.println(Integer.toHexString((int) Long.parseLong(binaryInt, 2)));
         }
-        
+
     }
 
     /**
@@ -319,10 +319,9 @@ public class QREncryption {
     private void encode() {
         double x = 0.1;
         double r = 4.0;
-        for (int i = 0; i < MAP_N; ++i) {
+        for (int i = 0; i < MAP_N; i++) {
             int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
-            System.out.println(tmpNum);
-            logisticMap[i] = tmpNum ^ matrixIntegers[i] & 255;
+            logisticMap[i] = tmpNum ^ matrixBytes[i] & 255;
             x = logictic(x, r);
         }
     }
