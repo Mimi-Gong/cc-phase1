@@ -1,9 +1,12 @@
 package QRcode;
 
+import java.math.BigInteger;
+
 public class QREncryption {
 
     /** The 2-D QR code matrix */
     private boolean[][] matrix;
+    private byte[] matrixBytes;
 
     /** The 2-D logistic map. */
     private int[] logisticMap;
@@ -19,9 +22,16 @@ public class QREncryption {
 
     /** The version1  QR matrix. */
     private static final int VERSION1 = 21;
-
+    private static final int PAYLOAD_Len1 = 224;
+    
     /** The version2  QR matrix. */
     private static final int VERSION2 = 25;
+    private static final int PAYLOAD_Len2 = 370;
+    
+    /** Zigzap movement */
+    private static final int UP = -1;
+    private static final int DOWN = 1;
+    
     
     /**
      * Constructor.
@@ -48,7 +58,7 @@ public class QREncryption {
     /**
      * Add position patterns to the matrix.
      */
-    private void addPositionPattern() {
+    public void addPositionPattern() {
         // Add left-up.
         addPos(3, 3);
         for (int i = 0; i <= 7; ++i) {
@@ -103,7 +113,7 @@ public class QREncryption {
     /**
      * Add timing patterns to the matrix.
      */
-    private void addTimingPattern() {
+    public void addTimingPattern() {
         addTiming(6, 8, 0, N - 16);
         addTiming(8, 6, 1, N - 16);
     }
@@ -135,12 +145,70 @@ public class QREncryption {
     /**
      * Add alignment pattern to the matrix.
      */
-    private void addAlignmentPattern() {
+    public void addAlignmentPattern() {
         if (N == VERSION1) {
             return;
         }
         addAlignment(18, 18);
     }
+    
+     
+    public String getPaddingBinaryString(int num){
+        return String.format("%08d", new BigInteger(Integer.toBinaryString(num)));
+    }
+    
+    private void fillColumn(int startX, int startY, int endX, int endY, int move, String str) {
+        int curX = startX;
+        int curY = startY;
+        
+        for (int i = 0; i<str.length(); i += 2) {
+            if (str.charAt(i) == '1') {
+                matrix[curX][curY] = true;
+            }
+            if (str.charAt(i+1) == '1') {
+                matrix[curX][curY-1] = true;
+            }
+            curX += move;
+        }
+    }
+    
+    public void zigzagVersion1(String playload) {
+        fillColumn(20, 20, 8, 19, UP, playload.substring(0,26));
+        fillColumn(8, 18, 20, 17, DOWN, playload.substring(26,52));
+        fillColumn(20, 16, 8, 15, UP, playload.substring(52,78));
+        fillColumn(8, 14, 20, 13, DOWN, playload.substring(78, 104));
+        fillColumn(20, 12, 7, 11, UP, playload.substring(104, 132));
+        fillColumn(5, 12, 0, 11, UP, playload.substring(132, 144));
+        fillColumn(0, 10, 5, 9, DOWN, playload.substring(144, 156));
+        fillColumn(7, 10, 20, 9, DOWN, playload.substring(156,184));
+        fillColumn(12, 8, 8, 7, UP, playload.substring(184,194));
+        fillColumn(8, 5, 12, 4, DOWN, playload.substring(194,204));
+        fillColumn(12, 3, 8, 2, UP, playload.substring(204,214));
+        fillColumn(8, 1, 12, 0, DOWN, playload.substring(214,224));
+    }
+    
+    public void zigzagVersion2(String playload) {
+        fillColumn(24, 24, 8, 23, UP, playload.substring(0,34));
+        fillColumn(8, 22, 24, 21, DOWN, playload.substring(34,68));
+        fillColumn(24, 20, 21, 19, UP, playload.substring(68,76));
+        fillColumn(15, 20, 8, 19, UP, playload.substring(76,92));
+        fillColumn(8, 18, 15, 17, DOWN, playload.substring(92, 108));
+        fillColumn(21, 18, 24, 17, DOWN, playload.substring(108, 116));
+        fillColumn(24, 16, 21, 15, UP, playload.substring(116, 124));
+        fillColumn(15, 16, 7, 15, UP, playload.substring(124, 142));
+        fillColumn(5, 16, 0, 15, UP, playload.substring(142, 154));
+        fillColumn(0, 14, 5, 13, DOWN, playload.substring(154, 166));
+        fillColumn(7, 14, 24, 13, DOWN, playload.substring(166, 202));
+        fillColumn(24, 12, 7, 11, UP, playload.substring(202, 238));
+        fillColumn(5, 12, 0, 11, UP, playload.substring(238, 250));
+        fillColumn(0, 10, 5, 9, DOWN, playload.substring(250,262));
+        fillColumn(7, 10, 24, 9, DOWN, playload.substring(262,298));
+        fillColumn(16, 8, 8, 7, UP, playload.substring(298,316));
+        fillColumn(8, 5, 16, 4, DOWN, playload.substring(316,334));
+        fillColumn(16, 3, 8, 2, UP, playload.substring(334,352));
+        fillColumn(8, 1, 16, 0, DOWN, playload.substring(352,370));
+    }
+ 
 
     /**
      * Add the alignment pattern.
@@ -165,31 +233,85 @@ public class QREncryption {
         for (int i = centralX - 1; i <= centralX + 1; ++i) {
             matrix[i][centralY - 2] = true;
         }
-    }
+     }
 
     /**
      * Fill the payload to the matrix.
      */
-    private void fillPayload() {
-        return;
+    public void fillPayload() {
+        StringBuilder payload = new StringBuilder();
+        String inputlen = getPaddingBinaryString(input.length());
+        payload.append(inputlen);
+        
+        for (int i = 0; i<input.length(); i++) {
+            String binaryStr = getPaddingBinaryString(input.charAt(i));
+            payload.append(binaryStr);
+            int checksum = 0;
+            for (int j = 0; j<binaryStr.length(); j++) {
+                checksum ^= Integer.valueOf(binaryStr.charAt(j));
+            }
+            String errorcode = getPaddingBinaryString(checksum);
+            payload.append(errorcode);
+        }
+        
+        if (N == VERSION1) {
+            while (payload.length() < PAYLOAD_Len1) {
+                payload.append("1110110000010001");
+            }
+            zigzagVersion1(payload.toString());
+        } else {
+            while (payload.length() < PAYLOAD_Len2) {
+                payload.append("1110110000010001");
+            }
+            zigzagVersion2(payload.toString());
+        }
+    }
+    
+    public void MatrixToBytes() {
+        StringBuffer binaryStr = new StringBuffer();
+        if (N == VERSION1) {
+            matrixBytes = new byte[56];
+        } else {
+            matrixBytes = new byte[79];
+        }
+        
+        for (int i = 0; i< matrix.length; i++) {
+            for (int j = 0; j<matrix[0].length; j++) {
+                if (matrix[i][j]) {
+                    binaryStr.append("1");
+                } else {
+                    binaryStr.append("0");
+                }
+            }
+        }
+        
+        int cnt = 0;
+        for (int i = 0; i<binaryStr.length(); i += 8) {
+            int end = Math.min(binaryStr.length(), i+8);
+            String binaryByte = binaryStr.substring(i, end).toString();
+            matrixBytes[cnt++] = (byte) Integer.parseInt(binaryByte, 2);
+            System.out.println(Integer.toHexString(Integer.parseInt(binaryByte, 2)));
+        }
+        
     }
 
     /**
      * Print the 2-D matrix for debug use.
      */
-    private void printHelper() {
+    public void printHelper() {
         System.out.println(N);
         for (int i = 0; i < N; ++i) {
             for (int j = 0; j < N; ++j) {
                 if (matrix[i][j] == true) {
                     System.out.print("1");
                 } else {
-                    System.out.print(" ");
+                    System.out.print("0");
                 }
             }
             System.out.println();
         }
     }
+    
 
     /**
      * Encode the QRcode to logistic map.
