@@ -342,11 +342,16 @@ public class QREncryption {
      */
     private void encode() {
         int padding = 32 - N * N % 32;
+        int lastBytesCnt = 4;
+        if (N == VERSION2) {
+            padding = 24 - N * N % 32;
+            lastBytesCnt = 3;
+        }
 
         // Initial logistic number.
         double x = 0.1;
         double r = 4.0;
-        for (int i = 0; i < MAP_N - 4; i++) {
+        for (int i = 0; i < MAP_N - lastBytesCnt; i++) {
             int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
             logisticMap[i] = tmpNum ^ matrixBytes[i];
             x = logictic(x, r);
@@ -354,7 +359,7 @@ public class QREncryption {
 
         // Get reverse logistic mask for last 4 bytes.
         int logisNum = 0;
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < lastBytesCnt; ++i) {
             int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
             logisNum = (logisNum << 8) | tmpNum;
             x = logictic(x, r);
@@ -364,8 +369,8 @@ public class QREncryption {
         
         // Handle the last 4 bytes.
         int mask = 0x000000ff;
-        for (int i = 3; i >= 0; --i) {
-            int idx = MAP_N - 4 + i;
+        for (int i = lastBytesCnt - 1; i >= 0; --i) {
+            int idx = MAP_N - lastBytesCnt + i;
             logisticMap[idx] = matrixBytes[idx] ^ (mask & logisNum);
             logisNum = logisNum >>> 8;
         }
@@ -388,7 +393,7 @@ public class QREncryption {
     private void printRes() {
         System.out.println("++++++++++ The encode result +++++++");
         for (int i : logisticMap) {
-            System.out.print(" 0x" + Integer.toHexString(i));
+            System.out.println(" 0x" + Integer.toHexString(i));
         }
     }
 
