@@ -2,11 +2,12 @@ package QRcode;
 
 import java.math.BigInteger;
 
+
 public class QREncryption {
 
     /** The 2-D QR code matrix */
     private boolean[][] matrix;
-    private int[] matrixIntegers;
+    private int[] matrixBytes;
 
     /** Store the input string. */
     private String input;
@@ -262,9 +263,9 @@ public class QREncryption {
     public void MatrixToBytes() {
         StringBuffer binaryStr = new StringBuffer();
         if (N == VERSION1) {
-            matrixIntegers = new int[14];
+            matrixBytes = new int[56];
         } else {
-            matrixIntegers = new int[20];
+            matrixBytes = new int[79];
         }
         
         for (int i = 0; i< matrix.length; i++) {
@@ -278,13 +279,26 @@ public class QREncryption {
         }
         
         int cnt = 0;
-        for (int i = 0; i<binaryStr.length(); i += 32) {
-            int end = Math.min(binaryStr.length(), i+32);
-            String binaryInt = binaryStr.substring(i, end).toString();
-            matrixIntegers[cnt++] = (int) Long.parseLong(binaryInt, 2);
-            System.out.println(Integer.toHexString((int) Long.parseLong(binaryInt, 2)));
+        int i = 0;
+        for (; i + 32<binaryStr.length(); i += 32) {
+            for (int j = i; j < i+32; j += 8) {
+                int end = Math.min(binaryStr.length(), j+8);
+                String binaryByte = binaryStr.substring(j, end).toString();
+                matrixBytes[cnt++] = (byte) Integer.parseInt(binaryByte, 2);
+            }
+        }
+        cnt = matrixBytes.length-1;
+        for (int j = binaryStr.length(); j>i; j -= 8) { 
+            int begin = Math.max(j-8, i);
+            String binaryByte = binaryStr.substring(begin, j).toString();
+            matrixBytes[cnt--] = (byte) Integer.parseInt(binaryByte, 2);
+            System.out.println((cnt+1) + " " + matrixBytes[cnt+1]);
+            System.out.println(Integer.toHexString(matrixBytes[cnt+1]));
         }
         
+        for (int k = 0; k < matrixBytes.length; k++) {
+            System.out.println(Integer.toHexString(matrixBytes[k]));
+        }
     }
 
     /**
