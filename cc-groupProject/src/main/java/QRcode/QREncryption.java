@@ -9,11 +9,17 @@ public class QREncryption {
     private boolean[][] matrix;
     private int[] matrixBytes;
 
+    /** The 2-D logistic map. */
+    private int[] logisticMap;
+
     /** Store the input string. */
     private String input;
 
     /** The size of the matrix, determined by the input length. */
     private int N;
+
+    /** The size of the logistic map, determined by the matrix size. */
+    private int MAP_N;
 
     /** The version1  QR matrix. */
     private static final int VERSION1 = 21;
@@ -45,6 +51,8 @@ public class QREncryption {
             throw new Exception("Invalid input!");
         }
 
+        MAP_N = N * N / 8 + 1;
+        logisticMap = new int[MAP_N];
         this.input = input;
     }
 
@@ -259,6 +267,55 @@ public class QREncryption {
             zigzagVersion2(payload.toString());
         }
     }
+
+
+    /**
+     * Print the 2-D matrix for debug use.
+     */
+    public void printHelper() {
+        System.out.println(N);
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                if (matrix[i][j] == true) {
+                    System.out.print("1");
+                } else {
+                    System.out.print("0");
+                }
+            }
+            System.out.println();
+        }
+    }
+    
+
+    /**
+     * Encode the QRcode to logistic map.
+     */
+    private void encode() {
+        double x = 0.1;
+        double r = 4.0;
+        for (int i = 0; i < MAP_N; i++) {
+            int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
+            logisticMap[i] = tmpNum ^ matrixBytes[i] & 255;
+            x = logictic(x, r);
+        }
+    }
+
+    /**
+     * Calculate the logistic value.
+     * @param x the value.
+     * @param r the coefficient
+     * @return the logistic value.
+     */
+    static double logictic(double x, double r) {
+        return r * x * (1.0 - x);
+    }
+
+    private void printRes() {
+        System.out.println("+++++++++++++++++");
+        for (int i : logisticMap) {
+            System.out.println(Integer.toHexString(i));
+        }
+    }
     
     public void MatrixToBytes() {
         StringBuffer binaryStr = new StringBuffer();
@@ -301,29 +358,16 @@ public class QREncryption {
         }
     }
 
-    /**
-     * Print the 2-D matrix for debug use.
-     */
-    public void printHelper() {
-        System.out.println(N);
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                if (matrix[i][j] == true) {
-                    System.out.print("1");
-                } else {
-                    System.out.print("0");
-                }
-            }
-            System.out.println();
-        }
-    }
-    
-
     public static void main(String[] args) throws Exception {
-        QREncryption ins = new QREncryption("dsFFFFFFFFFFFFFW");
+        QREncryption ins = new QREncryption("CC Team");
         ins.addPositionPattern();
         ins.addTimingPattern();
         ins.addAlignmentPattern();
+        ins.fillPayload();
         ins.printHelper();
+
+        ins.MatrixToBytes();
+        ins.encode();
+        ins.printRes();
     }
 }
