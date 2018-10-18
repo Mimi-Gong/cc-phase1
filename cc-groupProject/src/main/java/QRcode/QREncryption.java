@@ -5,11 +5,17 @@ public class QREncryption {
     /** The 2-D QR code matrix */
     private boolean[][] matrix;
 
+    /** The 2-D logistic map. */
+    private int[] logisticMap;
+
     /** Store the input string. */
     private String input;
 
     /** The size of the matrix, determined by the input length. */
     private int N;
+
+    /** The size of the logistic map, determined by the matrix size. */
+    private int MAP_N;
 
     /** The version1  QR matrix. */
     private static final int VERSION1 = 21;
@@ -34,6 +40,8 @@ public class QREncryption {
             throw new Exception("Invalid input!");
         }
 
+        MAP_N = N * N / 8 + 1;
+        logisticMap = new int[MAP_N];
         this.input = input;
     }
 
@@ -181,6 +189,29 @@ public class QREncryption {
             }
             System.out.println();
         }
+    }
+
+    /**
+     * Encode the QRcode to logistic map.
+     */
+    private void encode() {
+        // byte[] matrixBytes = new byte[MAP_N];
+        double x = 0.1;
+        double r = 4.0;
+        for (int i = 0; i < MAP_N; ++i) {
+            logisticMap[i] = (int)(x * 255.0) ^ matrixBytes[i];
+            x = logictic(x, r);
+        }
+    }
+
+    /**
+     * Calculate the logistic value.
+     * @param x the value.
+     * @param r the coefficient
+     * @return the logistic value.
+     */
+    static double logictic(double x, double r) {
+        return r * x * (1.0 - x);
     }
 
     public static void main(String[] args) throws Exception {
