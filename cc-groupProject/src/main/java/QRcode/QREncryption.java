@@ -317,11 +317,12 @@ public class QREncryption {
      * Encode the QRcode to logistic map.
      */
     private void encode() {
-        // byte[] matrixBytes = new byte[MAP_N];
         double x = 0.1;
         double r = 4.0;
         for (int i = 0; i < MAP_N; ++i) {
-            logisticMap[i] = (int)(x * 255.0) ^ matrixBytes[i];
+            int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
+            System.out.println(tmpNum);
+            logisticMap[i] = tmpNum ^ matrixIntegers[i] & 255;
             x = logictic(x, r);
         }
     }
@@ -336,11 +337,23 @@ public class QREncryption {
         return r * x * (1.0 - x);
     }
 
+    private void printRes() {
+        System.out.println("+++++++++++++++++");
+        for (int i : logisticMap) {
+            System.out.println(Integer.toHexString(i));
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-        QREncryption ins = new QREncryption("dsFFFFFFFFFFFFFW");
+        QREncryption ins = new QREncryption("CC Team");
         ins.addPositionPattern();
         ins.addTimingPattern();
         ins.addAlignmentPattern();
+        ins.fillPayload();
         ins.printHelper();
+
+        ins.MatrixToBytes();
+        ins.encode();
+        ins.printRes();
     }
 }
