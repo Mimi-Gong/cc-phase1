@@ -21,4 +21,16 @@ public class QREncryptionTest {
         assertEquals("answer", "answer");
     }
     
+    @Test
+    public void testFillPayload2() throws Exception {
+        QREncryption redisClient = new QREncryption("CC Team is awesome!");
+        redisClient.addPositionPattern();
+        redisClient.addTimingPattern();
+        redisClient.addAlignmentPattern();
+        redisClient.fillPayload();
+        redisClient.printHelper();
+        redisClient.MatrixToBytes();
+        
+        assertEquals("answer", "answer");
+    }
 }

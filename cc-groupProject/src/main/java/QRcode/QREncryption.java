@@ -6,7 +6,7 @@ public class QREncryption {
 
     /** The 2-D QR code matrix */
     private boolean[][] matrix;
-    private byte[] matrixBytes;
+    private int[] matrixIntegers;
 
     /** Store the input string. */
     private String input;
@@ -262,9 +262,9 @@ public class QREncryption {
     public void MatrixToBytes() {
         StringBuffer binaryStr = new StringBuffer();
         if (N == VERSION1) {
-            matrixBytes = new byte[56];
+            matrixIntegers = new int[14];
         } else {
-            matrixBytes = new byte[79];
+            matrixIntegers = new int[20];
         }
         
         for (int i = 0; i< matrix.length; i++) {
@@ -278,11 +278,11 @@ public class QREncryption {
         }
         
         int cnt = 0;
-        for (int i = 0; i<binaryStr.length(); i += 8) {
-            int end = Math.min(binaryStr.length(), i+8);
-            String binaryByte = binaryStr.substring(i, end).toString();
-            matrixBytes[cnt++] = (byte) Integer.parseInt(binaryByte, 2);
-            System.out.println(Integer.toHexString(Integer.parseInt(binaryByte, 2)));
+        for (int i = 0; i<binaryStr.length(); i += 32) {
+            int end = Math.min(binaryStr.length(), i+32);
+            String binaryInt = binaryStr.substring(i, end).toString();
+            matrixIntegers[cnt++] = (int) Long.parseLong(binaryInt, 2);
+            System.out.println(Integer.toHexString((int) Long.parseLong(binaryInt, 2)));
         }
         
     }
