@@ -13,6 +13,12 @@ public class QRDecryption {
     /** The 2-D logistic map. */
     private byte[] logisticMap;
 
+    /** The array stores position centers. */
+    private int[][] positionCenters;
+
+    /** The position mask. */
+    private boolean[][] positionMask;
+
     /** Store the input string. */
     private String input;
     private static final int INPUT_N = 32;
@@ -48,6 +54,9 @@ public class QRDecryption {
         fillLogisticMap();
 
         orgMatrix = new boolean[INPUT_N][INPUT_N];
+        positionCenters = new int[3][2];
+        positionMask = new boolean[7][7];
+        generatePosMask(3, 3);
     }
 
 
@@ -103,6 +112,9 @@ public class QRDecryption {
             }
             System.out.println();
         }
+
+        // Extract the position matrix 
+        extractMatrix();
     }
 
 
@@ -129,10 +141,81 @@ public class QRDecryption {
         }
     }
 
+
     public void extractMatrix() {
-        
+        // Get the positions of position points.
+        extracCenters();
     }
-    
+
+
+    /**
+     * Get the positions of position point centers.
+     */
+    private void extracCenters() {
+        int pos = 0;
+        for (int i = 0; i < INPUT_N; ++i) {
+            for (int j = 0; j < INPUT_N; ++j) {
+                if (i < 3 || i > 28 || j < 3 || j > 28) {
+                    continue;
+                } else if ((i > 14 && i < 17) || (j > 14 && j < 17)) {
+                    continue;
+                }
+                // Check the mask.
+                boolean invalid = false;
+                for (int ki = -3; ki <= 3; ++ki) {
+                    for (int kj = -3; kj <= 3; ++kj) {
+                        if (orgMatrix[ki+i][kj+j] != positionMask[ki+3][kj+3]) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid) {
+                        break;
+                    }
+                }
+                // Record.
+                if (!invalid) {
+                    positionCenters[pos][0] = i;
+                    positionCenters[pos][1] = j;
+                    pos++;
+                }
+            }
+        }
+
+        System.out.println("--------- Centers extracted --------- \n");
+        System.out.println(pos);
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                System.out.print(positionCenters[i][j]);
+                System.out.print(" ");
+            }
+            System.out.println();
+        }
+    }
+
+    /**
+     * Add one position pattern to the matrix.
+     * 
+     * @param centralX the x-axis value of central point
+     * @param centralY the y-axis value of central point
+     */
+    private void generatePosMask(int centralX, int centralY) {
+        for (int i = centralX - 3; i <= centralX + 3; ++i) {
+            for (int j = centralY - 3; j <= centralY + 3; ++j) {
+                if ((i == centralX - 2 || i == centralX + 2) &&
+                    (j != centralY - 3 && j != centralY + 3)) {
+                    positionMask[i][j] = false;
+                } else if((j == centralY - 2 || j == centralY + 2) &&
+                          (i != centralX - 3 && i != centralX + 3)) {
+                    positionMask[i][j] = false;
+                } else {
+                    positionMask[i][j] = true;
+                }
+            }
+        }
+    }
+
+
     public void zigzagDecode() {
         
     }
