@@ -1,7 +1,7 @@
 package QRcode;
 
 import java.math.BigInteger;
-
+import java.nio.ByteBuffer;
 
 public class QREncryption {
 
@@ -60,16 +60,17 @@ public class QREncryption {
     /**
      * Generate the QR code. This is the main API of the class.
      */
-    public void generateQRCode() {
+    public String generateQRCode() {
         addPositionPattern();
         addTimingPattern();
         addAlignmentPattern();
         fillPayload();
-        printHelper();
 
         MatrixToBytes();
         encode();
-        printRes();        
+        String res = getResStr();
+        System.out.println(res);
+        return res;
     }
 
  
@@ -388,6 +389,44 @@ public class QREncryption {
 
 
     /**
+     * Convert the logistic map to hex string.
+     * 
+     * @return the hex string
+     */
+    private String getResStr() {
+        // Calculate the padding and last bytes.
+        int lastBytesCnt = 4;
+        if (N == VERSION2) {
+            lastBytesCnt = 3;
+        }
+
+        StringBuilder res = new StringBuilder();
+
+        // Handle the prefix.
+        byte[] buffer = new byte[4];
+        for (int i = 0; i < MAP_N - lastBytesCnt; i++) {
+            if (i != 0 && i % 4 == 0) {
+                res.append("0x");
+                res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
+            }
+            buffer[i % 4] = (byte)logisticMap[i];
+        }
+        res.append("0x");
+        res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
+
+        // Handle the last bytes.
+        byte[] lastBuffer = new byte[lastBytesCnt];
+        for (int i = 0; i <= lastBytesCnt - 1; ++i) {
+            int idx = MAP_N - lastBytesCnt + i;
+            lastBuffer[i] = (byte)logisticMap[idx];
+        }
+        res.append("0x");
+        res.append(Integer.toHexString(ByteBuffer.wrap(lastBuffer).getInt()));
+ 
+        return res.toString();
+    }
+
+    /**
      * Print the result of logistic encoding.
      */
     private void printRes() {
@@ -429,14 +468,10 @@ public class QREncryption {
             }
         }
         cnt = matrixBytes.length-1;
-        for (int j = binaryStr.length(); j>i; j -= 8) { 
+        for (int j = binaryStr.length(); j>i; j -= 8) {
             int begin = Math.max(j-8, i);
             String binaryByte = binaryStr.substring(begin, j).toString();
             matrixBytes[cnt--] = (byte) Integer.parseInt(binaryByte, 2) & 255;
-        }
-        
-        for (int k = 0; k < matrixBytes.length; k++) {
-            System.out.println(Integer.toHexString(matrixBytes[k]));
         }
     }
     
