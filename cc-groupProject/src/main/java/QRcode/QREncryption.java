@@ -289,7 +289,7 @@ public class QREncryption {
     /**
      * Fill the payload to the matrix.
      */
-    public void fillPayload() {
+    public boolean[][] fillPayload() {
         StringBuilder payload = new StringBuilder();
         String inputlen = getPaddingBinaryString(input.length());
         payload.append(inputlen);
@@ -316,6 +316,8 @@ public class QREncryption {
             }
             zigzagVersion2(payload.toString());
         }
+        
+        return matrix;
     }
 
 
