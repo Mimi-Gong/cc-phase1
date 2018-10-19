@@ -69,9 +69,7 @@ public class QRDecryption {
     public void decode() throws DecoderException {
         // Split the input to string array.
         String[] subStrs = input.substring(2).split("0x");
-        System.out.println(subStrs.length);
-        System.out.println("------------------ \n");
-
+        
         // Decode the string with logistic map.
         for (int i = 0; i < logisticMap.length; i += 4) {
             String tmpStr = subStrs[i / 4];
@@ -85,7 +83,7 @@ public class QRDecryption {
                 logisticMap[i+j] = (byte) (logisticMap[i+j] ^ decoded[j]);
             }
         }
-        System.out.println("\n++++++++++++++++++++ \n");
+ 
 
         // Fill the 32 x 32 2-D matrix.
         int pos = 0;
@@ -102,17 +100,17 @@ public class QRDecryption {
             }
         }
 
-        // Print the matrix.
-        for (int i = 0; i < INPUT_N; ++i) {
-            for (int j = 0; j < INPUT_N; ++j) {
-                if (orgMatrix[i][j]) {
-                    System.out.print("1");
-                } else {
-                    System.out.print(" ");
-                }
-            }
-            System.out.println();
-        }
+//        // Print the matrix.
+//        for (int i = 0; i < INPUT_N; ++i) {
+//            for (int j = 0; j < INPUT_N; ++j) {
+//                if (orgMatrix[i][j]) {
+//                    System.out.print("1");
+//                } else {
+//                    System.out.print(" ");
+//                }
+//            }
+//            System.out.println();
+//        }
     }
 
 
@@ -179,16 +177,6 @@ public class QRDecryption {
                 }
             }
         }
-
-        System.out.println("--------- Centers extracted --------- \n");
-        System.out.println(pos);
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 2; ++j) {
-                System.out.print(positionCenters[i][j]);
-                System.out.print(" ");
-            }
-            System.out.println();
-        }
     }
 
     /**
@@ -221,13 +209,13 @@ public class QRDecryption {
         int curY = startY;
         
         while (binaryStr.length() < expetcedlen) {
-            if (matrix[curX][curY] = true) {
+            if (matrix[curX][curY]) {
                 binaryStr.append('1');
             } else {
                 binaryStr.append('0');
             }
             
-            if (matrix[curX][curY-1] = true) {
+            if (matrix[curX][curY-1]) {
                 binaryStr.append('1');
             } else {
                 binaryStr.append('0');
@@ -242,20 +230,16 @@ public class QRDecryption {
         int len = binaryStrToInt(str.substring(0, 8));
         int curptr = 8;
         for (int i = 0; i<len; i++) {
-            int strlen = binaryStrToInt(str.substring(curptr, curptr + 8));
-            curptr += 8;
-            for (int j = 0; j<strlen; j++) {
-                int chASCII = binaryStrToInt(str.substring(curptr, curptr + 8));
-                decodestr.append((char) chASCII);
-                curptr += 8;
-            }
+              int chASCII = binaryStrToInt(str.substring(curptr, curptr + 8));
+              decodestr.append((char) chASCII);
+              curptr += 16;
         }
         
         return decodestr.toString();
     }
     
 
-    public void zigzagDecode() {
+    public String zigzagDecode() {
         String zigzagstr;
         
         if (N == VERSION1) {
@@ -265,6 +249,7 @@ public class QRDecryption {
         }
         
         decodedstr = decodeBinary(zigzagstr);
+        return decodedstr;
     }
     
     
@@ -293,41 +278,47 @@ public class QRDecryption {
             }
         }
 
-        if (remain_x == positionCenters[0][0]) {
+        if (remain_x == min_x) {
             if (remain_y == min_y) {
-                rotateMatrix180();
+                rotateMatrix(180);
             } else {
-                rotateMatrix90();
+                rotateMatrix(270);
             }
         } else {
             if (remain_y == min_y) {
-                rotateMatrix270();
+                rotateMatrix(90);
             } 
         }
     }
+    
+    
+    public void rotateMatrix(int degree){
 
+        int row = matrix.length;
+        int col = matrix[0].length;
+        boolean[][] rotated = new boolean[col][row];
 
-    /**
-     * Rotate matrix 90.
-     */
-    private void rotateMatrix90() {
-        
-    }
+        for(int i=0; i<row; i++){
 
+            for(int j=0; j<col; j++){
 
-    /**
-     * Rotate matrix 180.
-     */
-    private void rotateMatrix180() {
-        
-    }
+                if (degree == 90) {
+                   
+                    rotated[col-j-1][i] = matrix[i][j];
+                }
 
+                if (degree == 180) {
+                     rotated[row-i-1][col-j-1] = matrix[i][j];
+                }
 
-    /**
-     * Rotate matrix 270.
-     */
-    private void rotateMatrix270() {
-        
+                if (degree == 270) {
+                     rotated[j][row-i-1] = matrix[i][j];
+                }
+            }
+        }
+
+        matrix = rotated;
+       
     }
 
 
@@ -397,5 +388,8 @@ public class QRDecryption {
         QRDecryption dec = new QRDecryption(in);
         dec.decode();
         dec.extractMatrix();
+        dec.getMarix();
+        System.out.println(dec.zigzagDecode());
+        
     }
 }
