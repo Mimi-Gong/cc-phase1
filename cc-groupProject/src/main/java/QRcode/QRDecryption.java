@@ -285,16 +285,23 @@ public class QRDecryption {
             N = VERSION2;
             matrix = new boolean[VERSION2][VERSION2];
         }
-        
+
+        // Copy the extracted part to the matrix.
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                matrix[i][j] = orgMatrix[min_x - 3 + i][min_y - 3 + j];
+            }
+        }
+
         if (remain_x == positionCenters[0][0]) {
             if (remain_y == min_y) {
-                rotateMatrix180(min_x, min_y);
+                rotateMatrix180();
             } else {
-                rotateMatrix90(min_x, min_y);
+                rotateMatrix90();
             }
         } else {
             if (remain_y == min_y) {
-                rotateMatrix270(min_x, min_y);
+                rotateMatrix270();
             } 
         }
     }
