@@ -33,4 +33,5 @@ public class QREncryptionTest {
         
         assertEquals("answer", "answer");
     }
+    
 }
