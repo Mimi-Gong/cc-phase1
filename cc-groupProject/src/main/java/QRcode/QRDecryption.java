@@ -113,9 +113,6 @@ public class QRDecryption {
             }
             System.out.println();
         }
-
-        // Extract the position matrix 
-        extractMatrix();
     }
 
 
@@ -367,5 +364,6 @@ public class QRDecryption {
                 + "0x82984c520x4ddee6f6";
         QRDecryption dec = new QRDecryption(in);
         dec.decode();
+        dec.extractMatrix();
     }
 }
