@@ -277,7 +277,7 @@ public class QRDecryption {
         
         int remain_x = positionCenters[0][0] ^ positionCenters[1][0] ^ positionCenters[2][0];
         int remain_y = positionCenters[0][1] ^ positionCenters[1][1] ^ positionCenters[2][1];
-        
+
         if (max_x - min_x + 1 == VERSION1) {
             N = VERSION1;
             matrix = new boolean[VERSION1][VERSION1];
@@ -305,7 +305,32 @@ public class QRDecryption {
             } 
         }
     }
-    
+
+
+    /**
+     * Rotate matrix 90.
+     */
+    private void rotateMatrix90() {
+        
+    }
+
+
+    /**
+     * Rotate matrix 180.
+     */
+    private void rotateMatrix180() {
+        
+    }
+
+
+    /**
+     * Rotate matrix 270.
+     */
+    private void rotateMatrix270() {
+        
+    }
+
+
     public String  zigzagVersion1() {
         StringBuilder binaryStr = new StringBuilder();
         
