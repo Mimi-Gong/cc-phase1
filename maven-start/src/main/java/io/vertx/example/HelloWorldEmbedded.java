@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -34,21 +35,45 @@ public class HelloWorldEmbedded extends AbstractVerticle {
     router.get("/q1").handler(this::handleQ1);
     router.put("/q2").handler(this::handleQ2);
 
-    vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+    vertx.createHttpServer().requestHandler(router::accept).listen(80);
   }
 
   private void handleQ1(RoutingContext routingContext) {
     String type = routingContext.request().getParam("type");
     String data = routingContext.request().getParam("data");
+    String res = "";
     System.out.println(type);
-    System.out.println(data);
-    String res = "0x66d92b800x5bc76d830x121a7fa60x51c111870x3a5f3ca30x8be36a130xedb223a0xfc8e98780x33bf50de0x2e8709700x545a2d0f0xecef7ae0x461175cd0xff132a";
     HttpServerResponse response = routingContext.response();
-    if (type == null || data == null) {
+    if (type == null || data == null || data.length() == 0) {
       response.end();
     } else {
+        if (type.equals("encode")) {
+            QREncryption ins = new QREncryption(data);
+            res = ins.generateQRCode();
+            
+        } else if (type.equals("decode")) {
+            try {
+                QRDecryption dec = new QRDecryption(data);
+                dec.decode();
+                dec.extractMatrix();
+                dec.getMarix();
+                res = dec.zigzagDecode();
+            } catch (Exception e) {
+                // e.printStackTrace();
+                res = "";
+            }
+            
+            // res = "CC Team is awesome!";
+        }
       response.end(res);
     }
+    // QREncryption ins = new QREncryption();
+    // if (type.equals("encode")) {
+    //     res = ins.generateQRCode(data);
+    // } else if (type.equals("decode")) {
+    //     res = "CC Team is awesome!";
+    // }
+    // response.end(res);
   }
 
   private void handleQ2(RoutingContext routingContext) {
@@ -61,13 +86,16 @@ public class HelloWorldEmbedded extends AbstractVerticle {
   }
 
   public static void runExample(String verticleID) {
-        VertxOptions options = new VertxOptions();
+        // VertxOptions options = new VertxOptions();
+        DeploymentOptions options = new DeploymentOptions().setInstances(8);
+       
 
         Consumer<Vertx> runner = vertx -> {
-            vertx.deployVerticle(verticleID);
+            vertx.deployVerticle(verticleID, new DeploymentOptions().setInstances(8));
         };
-        
-        Vertx vertx = Vertx.vertx(options);
+        // Vertx vertx.deployVerticle(verticleID, options);
+        Vertx vertx = Vertx.vertx();
+        vertx.deployVerticle(verticleID, options);
 
         runner.accept(vertx);
     }
