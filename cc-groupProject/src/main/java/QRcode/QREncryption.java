@@ -10,7 +10,7 @@ public class QREncryption {
     private int[] matrixBytes;
 
     /** The 2-D logistic map. */
-    private int[] logisticMap;
+    private byte[] logisticMap;
 
     /** Store the input string. */
     private String input;
@@ -40,19 +40,17 @@ public class QREncryption {
      * @param input input string
      * @throws Exception exception
      */
-    public QREncryption(String input) throws Exception {
+    public QREncryption(String input) {
         if (input.length() <= 14) {
             N = VERSION1;
             matrix = new boolean[VERSION1][VERSION1];
         } else if (input.length() <= 23) {
             N = VERSION2;
             matrix = new boolean[VERSION2][VERSION2];
-        } else {
-            throw new Exception("Invalid input!");
         }
 
         MAP_N = N * N / 8 + 1;
-        logisticMap = new int[MAP_N];
+        logisticMap = new byte[MAP_N];
         this.input = input;
     }
 
@@ -67,10 +65,7 @@ public class QREncryption {
         fillPayload();
 
         MatrixToBytes();
-        encode();
-        String res = getResStr();
-        System.out.println(res);
-        return res;
+        return encode();
     }
 
  
@@ -323,27 +318,19 @@ public class QREncryption {
 
 
     /**
-     * Print the 2-D matrix for debug use.
+     * Calculate the logistic value.
+     * @param x the value.
+     * @param r the coefficient
+     * @return the logistic value.
      */
-    public void printHelper() {
-        System.out.println(N);
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                if (matrix[i][j] == true) {
-                    System.out.print("1");
-                } else {
-                    System.out.print("0");
-                }
-            }
-            System.out.println();
-        }
+    static double logictic(double x, double r) {
+        return r * x * (1.0 - x);
     }
-    
 
     /**
      * Encode the QRcode to logistic map.
      */
-    private void encode() {
+    private String encode() {
         int padding = 32 - N * N % 32;
         int lastBytesCnt = 4;
         if (N == VERSION2) {
@@ -351,14 +338,28 @@ public class QREncryption {
             lastBytesCnt = 3;
         }
 
+        StringBuilder res = new StringBuilder();
+
         // Initial logistic number.
         double x = 0.1;
         double r = 4.0;
+
+        byte[] buffer = new byte[4];
         for (int i = 0; i < MAP_N - lastBytesCnt; i++) {
+            // Get the value.
             int tmpNum = Integer.reverse((int)(x * 255.0)) >>> 24;
-            logisticMap[i] = tmpNum ^ matrixBytes[i];
+            logisticMap[i] = (byte) (tmpNum ^ matrixBytes[i]);
             x = logictic(x, r);
+
+            // Print the result to encode string.
+            if (i != 0 && i % 4 == 0) {
+                res.append("0x");
+                res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
+            }
+            buffer[i % 4] = (byte) logisticMap[i];
         }
+        res.append("0x");
+        res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
 
         // Get reverse logistic mask for last 4 bytes.
         int logisNum = 0;
@@ -372,70 +373,29 @@ public class QREncryption {
         
         // Handle the last 4 bytes.
         int mask = 0x000000ff;
+        // Print the last bytes.
+        byte[] lastBuffer = new byte[4];
+        if (lastBytesCnt == 3) {
+            lastBuffer[0] = 0x00;
+        }
+
         for (int i = lastBytesCnt - 1; i >= 0; --i) {
             int idx = MAP_N - lastBytesCnt + i;
-            logisticMap[idx] = matrixBytes[idx] ^ (mask & logisNum);
+            logisticMap[idx] = (byte) (matrixBytes[idx] ^ (mask & logisNum));
             logisNum = logisNum >>> 8;
-        }
-    }
 
-    /**
-     * Calculate the logistic value.
-     * @param x the value.
-     * @param r the coefficient
-     * @return the logistic value.
-     */
-    static double logictic(double x, double r) {
-        return r * x * (1.0 - x);
-    }
-
-
-    /**
-     * Convert the logistic map to hex string.
-     * 
-     * @return the hex string
-     */
-    private String getResStr() {
-        // Calculate the padding and last bytes.
-        int lastBytesCnt = 4;
-        if (N == VERSION2) {
-            lastBytesCnt = 3;
+            lastBuffer[i] = logisticMap[idx];
         }
 
-        StringBuilder res = new StringBuilder();
-
-        // Handle the prefix.
-        byte[] buffer = new byte[4];
-        for (int i = 0; i < MAP_N - lastBytesCnt; i++) {
-            if (i != 0 && i % 4 == 0) {
-                res.append("0x");
-                res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
-            }
-            buffer[i % 4] = (byte)logisticMap[i];
-        }
+        String tmpStr = Integer.toHexString(ByteBuffer.wrap(lastBuffer).getInt());
         res.append("0x");
-        res.append(Integer.toHexString(ByteBuffer.wrap(buffer).getInt()));
-
-        // Handle the last bytes.
-        byte[] lastBuffer = new byte[lastBytesCnt];
-        for (int i = 0; i <= lastBytesCnt - 1; ++i) {
-            int idx = MAP_N - lastBytesCnt + i;
-            lastBuffer[i] = (byte)logisticMap[idx];
+        if (lastBytesCnt == 3) {
+            res.append(tmpStr.substring(0, tmpStr.length() - 2));
+        } else {
+            res.append(tmpStr);
         }
-        res.append("0x");
-        res.append(Integer.toHexString(ByteBuffer.wrap(lastBuffer).getInt()));
  
         return res.toString();
-    }
-
-    /**
-     * Print the result of logistic encoding.
-     */
-    private void printRes() {
-        System.out.println("++++++++++ The encode result +++++++");
-        for (int i : logisticMap) {
-            System.out.println(" 0x" + Integer.toHexString(i));
-        }
     }
 
 
@@ -474,6 +434,35 @@ public class QREncryption {
             int begin = Math.max(j-8, i);
             String binaryByte = binaryStr.substring(begin, j).toString();
             matrixBytes[cnt--] = (byte) Integer.parseInt(binaryByte, 2) & 255;
+        }
+    }
+
+
+    /**
+     * Print the 2-D matrix for debug use.
+     */
+    public void printHelper() {
+        System.out.println(N);
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                if (matrix[i][j] == true) {
+                    System.out.print("1");
+                } else {
+                    System.out.print("0");
+                }
+            }
+            System.out.println();
+        }
+    }
+
+
+    /**
+     * Print the result of logistic encoding.
+     */
+    private void printRes() {
+        System.out.println("++++++++++ The encode result +++++++");
+        for (int i : logisticMap) {
+            System.out.println(" 0x" + Integer.toHexString(i));
         }
     }
     
