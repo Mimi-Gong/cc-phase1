@@ -21,8 +21,9 @@ public class HelloWorldEmbedded extends AbstractVerticle {
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) {
-    String verticleID = HelloWorldEmbedded.class.getName();
-    runExample(verticleID);
+    // String verticleID = HelloWorldEmbedded.class.getName();
+    // runExample(verticleID);
+    runExample();
   }
 
 
@@ -32,10 +33,16 @@ public class HelloWorldEmbedded extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     router.route().handler(BodyHandler.create());
+    router.get("/").handler(this::healthCheck);
     router.get("/q1").handler(this::handleQ1);
-    router.put("/q2").handler(this::handleQ2);
+    router.get("/q2").handler(this::handleQ2);
 
     vertx.createHttpServer().requestHandler(router::accept).listen(80);
+  }
+
+  private void healthCheck(RoutingContext routingContext) {
+    HttpServerResponse response = routingContext.response();
+    response.end("null");
   }
 
   private void handleQ1(RoutingContext routingContext) {
@@ -85,19 +92,25 @@ public class HelloWorldEmbedded extends AbstractVerticle {
     response.setStatusCode(statusCode).end();
   }
 
-  public static void runExample(String verticleID) {
-        // VertxOptions options = new VertxOptions();
-        DeploymentOptions options = new DeploymentOptions().setInstances(8);
+  public static void runExample() {
+        // // VertxOptions options = new VertxOptions();
+        // DeploymentOptions options = new DeploymentOptions().setInstances(6);
        
 
-        Consumer<Vertx> runner = vertx -> {
-            vertx.deployVerticle(verticleID, new DeploymentOptions().setInstances(8));
-        };
-        // Vertx vertx.deployVerticle(verticleID, options);
+        // Consumer<Vertx> runner = vertx -> {
+        //     vertx.deployVerticle(verticleID, new DeploymentOptions().setInstances(6));
+        // };
+        // // Vertx vertx.deployVerticle(verticleID, options);
+        // Vertx vertx = Vertx.vertx();
+        // vertx.deployVerticle(verticleID, options);
+
+        // runner.accept(vertx);
+
+        String verticleID = HelloWorldEmbedded.class.getName();
         Vertx vertx = Vertx.vertx();
+        DeploymentOptions options = new DeploymentOptions().setInstances(6);
         vertx.deployVerticle(verticleID, options);
 
-        runner.accept(vertx);
     }
 
 
