@@ -1,8 +1,7 @@
-wget https://bintray.com/artifact/download/vertx/downloads/vert.x-3.5.4.tar.gz
-tar -zxf ~/vert.x-3.5.4.tar.gz
+wget https://bintray.com/artifact/download/vertx/downloads/vert.x-3.5.4.tar.gz  | tr -d '\r'
+tar -zxf /home/ubuntu/vert.x-3.5.4.tar.gz | tr -d '\r'
+export PATH="~/vertx/bin:$PATH"
 sudo apt-get update
-sudo apt-get upgrade -y
-sudo apt-get install default-jdk -y
-export PATH=~/vertx/bin:$
-export PATH=/usr/bin:/bin
-sudo apt-get update && sudo apt-get install maven -y
+sudo apt-get upgrade
+sudo apt-get install -y default-jdk
+sudo apt-get install -y maven
